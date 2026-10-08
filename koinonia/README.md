@@ -10,6 +10,7 @@ member data):
 - `Lectionary & Prayer Oct Nov and Dec 2026.xlsx`
 - `Vicar's Desk.docx`
 - `A4 - 3.pdf` (cover)
+- `approved_corrections.json` (optional) — `{"wrong": "right"}` fixes the church has approved
 - `fonts/` — Noto Sans and Noto Sans Malayalam (Regular, Bold) from notofonts
 
 Then:

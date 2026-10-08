@@ -15,6 +15,12 @@ HERE = pathlib.Path(__file__).parent
 SRC = HERE / "sources"
 OUT = HERE / "build" / "content.json"
 
+# Corrections to the workbook approved by the church, kept with the (private)
+# sources as {"wrong text": "right text"}. Applied as exact substring
+# replacements; anything not listed stays verbatim.
+CORRECTIONS_FILE = SRC / "approved_corrections.json"
+APPROVED_CORRECTIONS = json.loads(CORRECTIONS_FILE.read_text()) if CORRECTIONS_FILE.exists() else {}
+
 LECT_COLS = ["day", "month", "date", "language", "time", "theme", "firstLesson",
              "secondLesson", "epistle", "worshipAssistance", "kissOfPeace",
              "offertory", "prayer"]
@@ -25,7 +31,15 @@ def cell(v):
         return ""
     if isinstance(v, datetime.time):
         return v.strftime("%I:%M %p")
-    return str(v)
+    v = str(v)
+    for wrong, right in APPROVED_CORRECTIONS.items():
+        if wrong in v:
+            v = v.replace(wrong, right)
+            APPLIED.add(wrong)
+    return v
+
+
+APPLIED = set()
 
 
 def lectionary(wb):
@@ -83,6 +97,8 @@ def main():
         "lectionary": lectionary(wb),
         "prayerMeetings": prayer_meetings(wb),
     }
+    unused = set(APPROVED_CORRECTIONS) - APPLIED
+    assert not unused, f"approved corrections not found in source: {unused}"
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(content, ensure_ascii=False, indent=2))
     print(f"lectionary={len(content['lectionary'])} prayerMeetings={len(content['prayerMeetings'])}")
