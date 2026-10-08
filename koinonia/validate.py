@@ -1,4 +1,5 @@
 """Pre-export checks for the Q4 2026 draft. Exits non-zero on any failure."""
+import datetime
 import hashlib
 import json
 import pathlib
@@ -91,8 +92,10 @@ for it in content["lectionary"]:
                            "kissOfPeace", "offertory", "prayer", "language")
                for piece in pieces(k, it[k]) for run in latin_runs(piece) if run not in lect_values]
     check(not missing, f"lectionary {label}: all field text present {missing or ''}")
-    hdr = norm(f"{it['date'][:-2]}{it['date'][-2:].upper()} {it['month'].upper()} 2026 AT {it['time']}")
-    check(hdr in body, f"lectionary {label}: date/time strip present")
+    day = datetime.date(2026, datetime.datetime.strptime(it["month"], "%B").month,
+                        int(it["date"][:-2])).strftime("%A").upper()
+    hdr = norm(f"{day} {it['date'][:-2]}{it['date'][-2:].upper()} {it['month'].upper()} 2026 AT {it['time']}")
+    check(hdr in body, f"lectionary {label}: strip reads {day} ... AT {it['time']}")
 
 # --- prayer meetings
 check(len(content["prayerMeetings"]) == 12, "12 prayer meetings in content model")

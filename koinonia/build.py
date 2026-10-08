@@ -13,6 +13,7 @@ Pipeline
          for the page number
        - prepends the supplied Q4 cover and stamps page numbers
 """
+import datetime
 import html
 import json
 import pathlib
@@ -36,8 +37,12 @@ CARRY_FORWARD_PAGES = [23, 24, 25]
 PURPLE = "#7030A0"   # template rgb(0.439, 0.188, 0.627)
 LAVENDER = "#DCBFF9"  # template rgb(0.863, 0.749, 0.976)
 
-DAYS = {"Sun": "SUNDAY", "Mon": "MONDAY", "Tue": "TUESDAY", "Wed": "WEDNESDAY",
-        "Thu": "THURSDAY", "Fri": "FRIDAY", "Sat": "SATURDAY"}
+def weekday(it):
+    """Day name from the calendar date. The workbook's DAY column says "Sun" for
+    every service, including 25 Dec (Friday) and 31 Dec (Thursday); the church
+    confirmed the actual weekday should be printed."""
+    d = datetime.datetime.strptime(f"{int(it['date'][:-2])} {it['month']} 2026", "%d %B %Y")
+    return d.strftime("%A").upper()
 
 e = html.escape
 
@@ -192,7 +197,7 @@ def lectionary_html(items):
         if it["month"] != month:
             month = it["month"]
             out.append(f"<tr class='month'><td colspan='2'>{e(month.upper())}</td></tr>")
-        day = DAYS.get(it["day"], it["day"].upper())
+        day = weekday(it)
         out.append(f"<tr class='svc'><td colspan='2'>{e(day)} {ordinal(it['date'])} "
                    f"{e(it['month'].upper())} 2026 AT {e(it['time'])}</td></tr>")
         rows = [
