@@ -147,7 +147,8 @@ MALAYALAM_DISPLAY = {"\u0D07\u0D57": "\u0D08",   # ഇ + ൗ -> ഈ
 def display(text):
     for old, new in MALAYALAM_DISPLAY.items():
         text = text.replace(old, new)
-    return text
+    # Never break a line inside an ER reference.
+    return re.sub(r"\(ER (\d+)\)", "(ER\u00a0\\1)", text)
 
 
 def multiline(text):

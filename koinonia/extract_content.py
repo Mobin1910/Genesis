@@ -6,6 +6,7 @@ Blank cells stay blank (empty string).
 """
 import datetime
 import json
+import re
 import pathlib
 
 import docx
@@ -20,6 +21,47 @@ OUT = HERE / "build" / "content.json"
 # replacements; anything not listed stays verbatim.
 CORRECTIONS_FILE = SRC / "approved_corrections.json"
 APPROVED_CORRECTIONS = json.loads(CORRECTIONS_FILE.read_text()) if CORRECTIONS_FILE.exists() else {}
+
+# House style applied to names, ER numbers and meeting times (user request:
+# "make the ER numbers consistent with three digits" and similar fixes).
+# Every change is logged to build/style_changes.txt for review.
+ER_RE = re.compile(r"\(\s*E[Rr]\s*(?:No\.?)?\s*(\d+)\s*\)")
+TIME_RE = re.compile(r"\((\d{1,2}):(\d{2})\s*([AaPp][Mm])\)")
+TITLE_RE = re.compile(r"\b(Mr|Mrs|Ms|Dr)\.?[ \t]*(?=[A-Z])")
+
+
+def _uncap(segment):
+    """Title-case a segment typed in capitals (keeps ER, initials and codes like M-111)."""
+    letters = [ch for ch in segment if ch.isalpha()]
+    if not letters or sum(ch.isupper() for ch in letters) / len(letters) < 0.7:
+        return segment
+    return re.sub(r"\b[A-Z]{3,}\b", lambda m: m.group(0) if m.group(0) == "ER" else m.group(0).capitalize(),
+                  segment)
+
+
+def house_style(text, kind):
+    """kind: 'people' (names / ER numbers), 'theme', 'group' (prayer group + time)."""
+    t = ER_RE.sub(lambda m: f"(ER {int(m.group(1)):03d})", text)
+    t = re.sub(r"(?<=[^\s(\[])\(", " (", t)                 # space before "("
+    t = re.sub(r"[ \t]{2,}", " ", t)                         # collapse repeated spaces
+    if kind == "people":
+        t = TITLE_RE.sub(lambda m: m.group(1) + ". ", t)       # Mr/Mrs/Dr -> "Mr. "
+        t = re.sub(r"(&|\band) family\b", r"\1 Family", t)
+        t = "\n".join(" - ".join(_uncap(seg) for seg in line.split(" - ")) for line in t.split("\n"))
+    if kind == "group":
+        t = TIME_RE.sub(lambda m: f"({int(m.group(1))}:{m.group(2)}{m.group(3).upper()})", t)
+    return t
+
+
+STYLE_LOG = []
+
+
+def styled(rec, key, kind, where):
+    before = rec[key]
+    rec[key] = house_style(before, kind)
+    if rec[key] != before:
+        STYLE_LOG.append(f"{where} | {key}\n  was: {before!r}\n  now: {rec[key]!r}")
+
 
 LECT_COLS = ["day", "month", "date", "language", "time", "theme", "firstLesson",
              "secondLesson", "epistle", "worshipAssistance", "kissOfPeace",
@@ -97,6 +139,19 @@ def main():
         "lectionary": lectionary(wb),
         "prayerMeetings": prayer_meetings(wb),
     }
+    for it in content["lectionary"]:
+        where = f"Lectionary {it['date']} {it['month']}"
+        for key in ("firstLesson", "secondLesson", "worshipAssistance", "kissOfPeace", "offertory", "prayer"):
+            styled(it, key, "people", where)
+        styled(it, "theme", "theme", where)
+    for it in content["prayerMeetings"]:
+        where = f"Prayer meeting {it['date']}"
+        styled(it, "groupAndTime", "group", where)
+        styled(it, "memberDetails", "people", where)
+    (OUT.parent / "style_changes.txt").parent.mkdir(exist_ok=True)
+    (OUT.parent / "style_changes.txt").write_text("\n".join(STYLE_LOG) + "\n")
+    print(f"house-style changes: {len(STYLE_LOG)} fields")
+
     unused = set(APPROVED_CORRECTIONS) - APPLIED
     assert not unused, f"approved corrections not found in source: {unused}"
     OUT.parent.mkdir(exist_ok=True)

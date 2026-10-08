@@ -107,6 +107,17 @@ for it in content["prayerMeetings"]:
 for d in {it["date"] for it in content["prayerMeetings"]}:
     check(norm(d) in pm_date, f"prayer meeting date {d} shown")
 
+# --- house style: every ER reference in the tables reads "(ER 000)"
+cols = lect_values + pm_details  # whitespace removed, so "(ER 056)" -> "(ER056)"
+refs = re.findall(r"\(E[Rr][^)]*\)", cols)
+odd_er = [r for r in refs if not re.fullmatch(r"\(ER\d{3}\)", r)]
+check(len(refs) > 50 and not odd_er, f"all {len(refs)} ER numbers are three digits as (ER 000) {odd_er or ''}")
+
+raw = json.dumps(content, ensure_ascii=False)
+raw_refs = re.findall(r".?\(\s*E[Rr][^)]*\)", raw)
+check(all(re.fullmatch(r" \(ER \d{3}\)", r) for r in raw_refs),
+      f"ER numbers spaced as 'Name (ER 000)' in content {[r for r in raw_refs if not re.fullmatch(r' [(]ER [0-9]{3}[)]', r)] or ''}")
+
 # --- removed / pending / old-quarter content must be absent
 generated = "".join(flat[1:-3])  # pages built from Q4 data
 for bad in ["APRIL", "MAY2026", "JUNE2026", "BIRTHDAYS", "MARRIAGEANNIVERSARIES", "SECRETARY'SDESK",
