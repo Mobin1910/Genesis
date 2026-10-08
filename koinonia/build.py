@@ -201,7 +201,7 @@ def lectionary_html(items):
         out.append(f"<tr class='svc'><td colspan='2'>{e(day)} {ordinal(it['date'])} "
                    f"{e(it['month'].upper())} 2026 AT {e(it['time'])}</td></tr>")
         rows = [
-            ("LANGUAGE", e(it["language"])),
+            ("WORSHIP", f"Holy Qurbana ({e(it['language'])})"),
             ("THEME", theme(it["theme"])),
             ("1<sup>st</sup> LESSON", lesson(it["firstLesson"])),
             ("2<sup>nd</sup> LESSON", lesson(it["secondLesson"])),

@@ -95,6 +95,8 @@ for it in content["lectionary"]:
     day = datetime.date(2026, datetime.datetime.strptime(it["month"], "%B").month,
                         int(it["date"][:-2])).strftime("%A").upper()
     hdr = norm(f"{day} {it['date'][:-2]}{it['date'][-2:].upper()} {it['month'].upper()} 2026 AT {it['time']}")
+    check(norm(f"WORSHIPHoly Qurbana ({it['language']})") in body,
+          f"lectionary {label}: WORSHIP row reads Holy Qurbana ({it['language']})")
     check(hdr in body, f"lectionary {label}: strip reads {day} ... AT {it['time']}")
 
 # --- prayer meetings
