@@ -153,6 +153,12 @@ for m in content["events"]["months"]:
         check(norm(it["date"]) in ev_dates and norm(it["event"]) in ev_events,
               f"event {it['date']}: {it['event'][:40]}")
 
+# --- Watch Night Service: lectionary and events agree on 09:30 PM
+watch = next(it for it in content["lectionary"] if it["date"] == "31st" and it["month"] == "December")
+check(watch["time"] == "09:30 PM" and norm("THURSDAY 31ST DECEMBER 2026 AT 09:30 PM") in body,
+      "31 Dec service strip reads 09:30 PM")
+check(norm("31st December @ 09:30 PM") in ev_dates, "31 Dec Watch Night Service listed at 09:30 PM")
+
 # --- church corrections to prayer meeting times
 pm = {(it["date"], it["groupAndTime"].split(" (")[0]): it["groupAndTime"] for it in content["prayerMeetings"]}
 check(pm[("4th October 2026", "KORAMANGALA")] == "KORAMANGALA (4:30PM)", "4 Oct Koramangala at 4:30PM")

@@ -13,7 +13,8 @@ member data):
 - `Newsletter Oct- Dec 2026.docx` (New Members table, Major Upcoming Events; red sections are ignored)
 - `A4 - 3.pdf` (cover)
 - `approved_corrections.json` (optional) — church-approved fixes:
-  `{"text": {"wrong": "right"}, "prayerMeetingTime": {"<date> | <GROUP>": "6:00PM"}}`
+  `{"text": {"wrong": "right"}, "prayerMeetingTime": {"<date> | <GROUP>": "6:00PM"},`
+  `"lectionaryTime": {"31st December": "09:30 PM"}}`
 - `fonts/` — Noto Sans and Noto Sans Malayalam (Regular, Bold) from notofonts
 
 Then:

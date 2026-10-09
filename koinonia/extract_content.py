@@ -24,6 +24,8 @@ _CORR = json.loads(CORRECTIONS_FILE.read_text()) if CORRECTIONS_FILE.exists() el
 APPROVED_CORRECTIONS = _CORR.get("text", {})
 # {"<date> | <GROUP>": "<time>"} - meeting times the church corrected.
 PRAYER_TIME_FIXES = _CORR.get("prayerMeetingTime", {})
+# {"<date> <Month>": "09:30 PM"} - service times the church corrected.
+LECTIONARY_TIME_FIXES = _CORR.get("lectionaryTime", {})
 NEWSLETTER_DOCX = SRC / "Newsletter Oct- Dec 2026.docx"
 NEWBORNS_TXT = SRC / "newborns.txt"  # one announcement per line, as sent by the church
 
@@ -272,6 +274,11 @@ def main():
     content["events"] = events(news)
     for it in content["lectionary"]:
         where = f"Lectionary {it['date']} {it['month']}"
+        fix = LECTIONARY_TIME_FIXES.get(f"{it['date']} {it['month']}")
+        if fix:
+            STYLE_LOG.append(f"{where} | time (church correction)\n  was: {it['time']!r}\n  now: {fix!r}")
+            it["time"] = fix
+            APPLIED_TIMES.add(f"lect:{it['date']} {it['month']}")
         for key in ("firstLesson", "secondLesson", "worshipAssistance", "kissOfPeace", "offertory", "prayer"):
             styled(it, key, "people", where)
         styled(it, "theme", "theme", where)
@@ -289,7 +296,8 @@ def main():
     (OUT.parent / "style_changes.txt").write_text("\n".join(STYLE_LOG) + "\n")
     print(f"house-style changes: {len(STYLE_LOG)} fields")
 
-    unused = (set(APPROVED_CORRECTIONS) - APPLIED) | (set(PRAYER_TIME_FIXES) - APPLIED_TIMES)
+    unused = ((set(APPROVED_CORRECTIONS) - APPLIED) | (set(PRAYER_TIME_FIXES) - APPLIED_TIMES)
+              | ({f"lect:{k}" for k in LECTIONARY_TIME_FIXES} - APPLIED_TIMES))
     assert not unused, f"approved corrections not found in source: {unused}"
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(content, ensure_ascii=False, indent=2))
