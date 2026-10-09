@@ -9,8 +9,10 @@ member data):
 - `St Stephens MTC BLR - Koinonia Apr-Jun-2026.pdf` (template)
 - `Lectionary & Prayer Oct Nov and Dec 2026.xlsx`
 - `Vicar's Desk.docx`
+- `Newsletter Oct- Dec 2026.docx` (New Members table, Major Upcoming Events; red sections are ignored)
 - `A4 - 3.pdf` (cover)
-- `approved_corrections.json` (optional) — `{"wrong": "right"}` fixes the church has approved
+- `approved_corrections.json` (optional) — church-approved fixes:
+  `{"text": {"wrong": "right"}, "prayerMeetingTime": {"<date> | <GROUP>": "6:00PM"}}`
 - `fonts/` — Noto Sans and Noto Sans Malayalam (Regular, Bold) from notofonts
 
 Then:

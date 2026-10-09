@@ -118,10 +118,43 @@ raw_refs = re.findall(r".?\(\s*E[Rr][^)]*\)", raw)
 check(all(re.fullmatch(r" \(ER \d{3}\)", r) for r in raw_refs),
       f"ER numbers spaced as 'Name (ER 000)' in content {[r for r in raw_refs if not re.fullmatch(r' [(]ER [0-9]{3}[)]', r)] or ''}")
 
+# --- new members (from the Oct-Dec newsletter DOCX)
+nm_pages = [i for i, t in enumerate(pages) if "HOME ADDRESS" in t]
+nm_text = "".join(flat[i] for i in nm_pages)
+check(len(content["newMembers"]) == 14, "14 new member families in content model")
+check(nm_pages and "WarmwelcometheNewMemberstotheSt.Stephen’sfamily" in flat[nm_pages[0]],
+      "New Members bar + welcome line")
+nm_hof = column(127.5, 211.5, nm_pages)
+nm_addr = column(247, 424, nm_pages)
+nm_fam = column(424.5, 560, nm_pages)
+for it in content["newMembers"]:
+    ok = (norm(it["hof"]) in nm_hof and it["er"] in nm_text and norm(it["address"]) in nm_addr
+          and norm(it["family"]) in nm_fam)
+    check(ok, f"new member ER {it['er']}: HOF, address and family present")
+    check(it["mobile"] not in "".join(flat[1:-3]), f"new member ER {it['er']}: mobile number not printed")
+
+# --- major upcoming events
+ev_pages = [i for i, t in enumerate(pages) if "MAJOR UPCOMING EVENTS" in t]
+ev_dates, ev_events = column(36, 227, ev_pages), column(227.5, 560, ev_pages)
+n_ev = sum(len(m["items"]) for m in content["events"]["months"])
+check(n_ev == 13, f"13 events in content model ({n_ev})")
+for m in content["events"]["months"]:
+    for it in m["items"]:
+        check(norm(it["date"]) in ev_dates and norm(it["event"]) in ev_events,
+              f"event {it['date']}: {it['event'][:40]}")
+
+# --- church corrections to prayer meeting times
+pm = {(it["date"], it["groupAndTime"].split(" (")[0]): it["groupAndTime"] for it in content["prayerMeetings"]}
+check(pm[("4th October 2026", "KORAMANGALA")] == "KORAMANGALA (4:30PM)", "4 Oct Koramangala at 4:30PM")
+check(pm[("11th October 2026", "ECITY")] == "ECITY (6:00PM)", "11 Oct ECITY at 6:00PM")
+check(pm[("1st November 2026", "ECITY")] == "ECITY (6:30PM)", "1 Nov ECITY unchanged at 6:30PM")
+check(norm("KORAMANGALA (4:30PM)") in pm_group and norm("ECITY (6:00PM)") in pm_group, "corrected times printed")
+
 # --- removed / pending / old-quarter content must be absent
 generated = "".join(flat[1:-3])  # pages built from Q4 data
 for bad in ["APRIL", "MAY2026", "JUNE2026", "BIRTHDAYS", "MARRIAGEANNIVERSARIES", "SECRETARY'SDESK",
-            "NEWBORNBABIES", "NEWMEMBERS", "MAJORUPCOMINGEVENTS", "BAPTISM", "OBITUARY", "HOLYMATRIMONY",
+            "NEWBORNBABIES", "NEWBORNS", "BAPTISM", "BAPTIZED", "OBITUARY", "CONDOLENCES", "HOLYMATRIMONY",
+            "395/CRLM", "371/Carmelaram", "087/Belandur",
             "19thApril2026", "21stJune2026", "Easter"]:
     check(bad.lower() not in generated.lower(), f"no old/removed content: {bad}")
 check(not any("BIRTHDAYS" in t or "ANNIVERSARIES" in t for t in pages), "no birthday/anniversary pages anywhere")

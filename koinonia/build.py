@@ -65,6 +65,7 @@ CSS = f"""
 @font-face {{ font-family: 'AgencyFB'; src: url('fonts/AgencyFB.ttf'); }}
 @font-face {{ font-family: 'Daytona'; src: url('fonts/Daytona.ttf'); }}
 @font-face {{ font-family: 'Rastanty'; src: url('fonts/RastantyCortez.ttf'); }}
+@font-face {{ font-family: 'Candara'; src: url('fonts/Candara-BoldItalic.ttf'); font-weight: 700; font-style: italic; }}
 @font-face {{ font-family: 'Mal'; src: url('../sources/fonts/NotoSansMalayalam-Regular.ttf');
               font-weight: 400; unicode-range: U+0D00-0D7F, U+200C-200D; size-adjust: 100%; }}
 @font-face {{ font-family: 'Mal'; src: url('../sources/fonts/NotoSansMalayalam-Bold.ttf');
@@ -114,6 +115,35 @@ table.pm th {{ background: {LAVENDER}; color: {PURPLE}; font-size: 13pt; font-we
 table.pm td {{ line-height: 14.6pt; vertical-align: middle; padding: 1pt 5.1pt 1.5pt; }}
 table.pm tr {{ break-inside: avoid; }}
 table.pm tr.newpage {{ break-before: page; }}
+
+/* Section bars (New Members, Major Upcoming Events): Aptos Bold 14pt white on
+   purple, 19.7pt high, 526.3pt wide from x 34.6 */
+.bar {{ margin-left: -1.4pt; width: 526.3pt; height: 19.7pt; line-height: 19.7pt; background: {PURPLE};
+        color: #fff; font-weight: 700; font-size: 14pt; text-align: center; }}
+.welcome {{ font-family: 'Candara', 'Fallback'; font-weight: 700; font-style: italic; font-size: 12pt;
+            text-align: center; margin: 19pt 0 14pt; line-height: 12pt; }}
+
+/* New members: 0.7pt black rules, columns 91 / 84.7 / 35 / 177.7 / 135.2 */
+table.nm {{ font-size: 12pt; }}
+table.nm col.g {{ width: 91pt; }}
+table.nm col.h {{ width: 84.7pt; }}
+table.nm col.e {{ width: 35pt; }}
+table.nm col.a {{ width: 177.7pt; }}
+table.nm th, table.nm td {{ border: 0.7pt solid #000; padding: 1pt 1.9pt 1.5pt; line-height: 14.7pt; }}
+table.nm th {{ background: {LAVENDER}; color: {PURPLE}; font-weight: 700; vertical-align: top; }}
+table.nm td {{ vertical-align: middle; }}
+table.nm tr {{ break-inside: avoid; }}
+
+/* Major upcoming events: purple horizontal rules, black verticals */
+.events {{ padding-top: 24.2pt; }}
+table.ev {{ font-size: 12pt; }}
+table.ev col.d {{ width: 191.2pt; }}
+table.ev td {{ border: 0.5pt solid #000; border-top-color: {PURPLE}; border-bottom-color: {PURPLE};
+               padding: 4.2pt 5.1pt 4.3pt; line-height: 14.7pt; vertical-align: top; }}
+table.ev tr.m td {{ background: {LAVENDER}; color: {PURPLE}; font-weight: 700; font-size: 13pt;
+                    text-align: center; padding: 0; line-height: 15.8pt; border-color: {PURPLE}; }}
+table.ev tr {{ break-inside: avoid; }}
+table.ev tr.m {{ break-after: avoid; }}
 
 /* Vicar's message */
 .vicar {{ font-size: 13pt; line-height: 18.25pt; text-align: justify; }}
@@ -220,6 +250,32 @@ def lectionary_html(items):
     return page_html("".join(out))
 
 
+# ------------------------------------------------------------------ New members / events
+def members_html(items):
+    out = ["<div class='bar'>NEW MEMBERS</div>",
+           # Standing welcome line from the template's New Members page.
+           "<div class='welcome'>“Warm welcome the New Members to the St. Stephen’s family”</div>",
+           "<table class='nm'><colgroup><col class='g'><col class='h'><col class='e'><col class='a'><col></colgroup>"
+           "<thead><tr><th>PRAYER GRP</th><th>HOF</th><th>ER</th><th>HOME ADDRESS</th><th>FAMILY MEMBERS</th></tr>"
+           "</thead><tbody>"]
+    for it in items:
+        out.append(f"<tr><td>{e(it['prayerGroup'])}</td><td>{e(it['hof'])}</td><td>{e(it['er'])}</td>"
+                   f"<td>{multiline(it['address'])}</td><td>{multiline(it['family'])}</td></tr>")
+    out.append("</tbody></table>")
+    return page_html("".join(out))
+
+
+def events_html(ev):
+    out = [f"<div class='events'><div class='bar'>{e(ev['title'].upper())}</div>",
+           "<table class='ev'><colgroup><col class='d'><col></colgroup>"]
+    for month in ev["months"]:
+        out.append(f"<tr class='m'><td colspan='2'>{e(month['month'].upper())}</td></tr>")
+        for it in month["items"]:
+            out.append(f"<tr><td>{e(it['date'])}</td><td>{e(it['event'])}</td></tr>")
+    out.append("</table></div>")
+    return page_html("".join(out))
+
+
 # ------------------------------------------------------------------ Prayer meetings
 def group_cell(text):
     # "KORAMANGALA (4:00PM)" -> group on one line, time below, as in the template.
@@ -310,6 +366,8 @@ def main():
     plain_bg, vicar_bg = background_pages()
     sections = [
         ("vicar", vicar_html(content["vicarMessage"]), vicar_bg),
+        ("members", members_html(content["newMembers"]), plain_bg),
+        ("events", events_html(content["events"]), plain_bg),
         ("lectionary", lectionary_html(content["lectionary"]), plain_bg),
         ("prayer", prayer_html(content["prayerMeetings"]), plain_bg),
     ]

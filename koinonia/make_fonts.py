@@ -26,6 +26,7 @@ WANTED = {
     "AgencyFB-Reg": "AgencyFB.ttf",
     "Daytona": "Daytona.ttf",
     "Rastanty Cortez": "RastantyCortez.ttf",
+    "Candara-BoldItalic": "Candara-BoldItalic.ttf",  # New Members welcome line
 }
 
 
