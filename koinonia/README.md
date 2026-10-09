@@ -9,6 +9,7 @@ member data):
 - `St Stephens MTC BLR - Koinonia Apr-Jun-2026.pdf` (template)
 - `Lectionary & Prayer Oct Nov and Dec 2026.xlsx`
 - `Vicar's Desk.docx`
+- `newborns.txt` — Newborn Babies announcements, one per line as sent by the church
 - `Newsletter Oct- Dec 2026.docx` (New Members table, Major Upcoming Events; red sections are ignored)
 - `A4 - 3.pdf` (cover)
 - `approved_corrections.json` (optional) — church-approved fixes:

@@ -123,6 +123,10 @@ table.pm tr.newpage {{ break-before: page; }}
 .welcome {{ font-family: 'Candara', 'Fallback'; font-weight: 700; font-style: italic; font-size: 12pt;
             text-align: center; margin: 19pt 0 14pt; line-height: 12pt; }}
 
+/* Newborns: Aptos 13pt, parents in bold capitals, indented to x 57.4 */
+.newborn {{ font-size: 13pt; line-height: 15.8pt; margin: 0 0 8pt 21.4pt; }}
+.nmbar {{ margin-top: 30pt; }}
+
 /* New members: 0.7pt black rules, columns 91 / 84.7 / 35 / 177.7 / 135.2 */
 table.nm {{ font-size: 12pt; }}
 table.nm col.g {{ width: 91pt; }}
@@ -250,9 +254,25 @@ def lectionary_html(items):
     return page_html("".join(out))
 
 
-# ------------------------------------------------------------------ New members / events
-def members_html(items):
-    out = ["<div class='bar'>NEW MEMBERS</div>",
+# ------------------------------------------------------------------ Newborns / new members / events
+def ordinals(text):
+    """14th -> 14<sup>th</sup>, as the template sets dates in running text."""
+    return re.sub(r"(\d)(st|nd|rd|th)\b", r"\1<sup>\2</sup>", e(text))
+
+
+def newborns_html(items):
+    out = ["<div class='bar'>NEWBORN BABIES</div>",
+           # Standing line from the template's Newborn Babies section.
+           "<div class='welcome'>“Congratulations to the joyful occasion of the Newborns”</div>"]
+    for it in items:
+        p1, p2 = (e(p.upper()) for p in it["parents"])
+        out.append(f"<p class='newborn'><b>{p1}</b> and <b>{p2}</b> (ER\u00a0{e(it['er'])}) "
+                   f"{ordinals(it['text'])}</p>")
+    return "".join(out)
+
+
+def members_html(items, newborns):
+    out = [newborns_html(newborns), "<div class='bar nmbar'>NEW MEMBERS</div>",
            # Standing welcome line from the template's New Members page.
            "<div class='welcome'>“Warm welcome the New Members to the St. Stephen’s family”</div>",
            "<table class='nm'><colgroup><col class='g'><col class='h'><col class='e'><col class='a'><col></colgroup>"
@@ -366,7 +386,7 @@ def main():
     plain_bg, vicar_bg = background_pages()
     sections = [
         ("vicar", vicar_html(content["vicarMessage"]), vicar_bg),
-        ("members", members_html(content["newMembers"]), plain_bg),
+        ("members", members_html(content["newMembers"], content["newborns"]), plain_bg),
         ("events", events_html(content["events"]), plain_bg),
         ("lectionary", lectionary_html(content["lectionary"]), plain_bg),
         ("prayer", prayer_html(content["prayerMeetings"]), plain_bg),

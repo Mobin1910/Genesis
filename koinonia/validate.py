@@ -133,6 +133,16 @@ for it in content["newMembers"]:
     check(ok, f"new member ER {it['er']}: HOF, address and family present")
     check(it["mobile"] not in "".join(flat[1:-3]), f"new member ER {it['er']}: mobile number not printed")
 
+# --- newborn babies (sent by the church in chat; Secretary's Desk sections not used this quarter)
+check(len(content["newborns"]) == 2, "2 newborn announcements in content model")
+nb_text = flat[nm_pages[0]] if nm_pages else ""
+check("NEWBORNBABIES" in nb_text and "CongratulationstothejoyfuloccasionoftheNewborns" in nb_text,
+      "Newborn Babies bar + congratulations line on the New Members page")
+for it in content["newborns"]:
+    line = norm(f"{it['parents'][0].upper()} and {it['parents'][1].upper()} (ER {it['er']}) {it['text']}")
+    check(line in nb_text, f"newborn (ER {it['er']}) announcement printed in full")
+check(nb_text.find("NEWBORNBABIES") < nb_text.find("NEWMEMBERS"), "Newborn Babies comes before New Members")
+
 # --- major upcoming events
 ev_pages = [i for i, t in enumerate(pages) if "MAJOR UPCOMING EVENTS" in t]
 ev_dates, ev_events = column(36, 227, ev_pages), column(227.5, 560, ev_pages)
@@ -153,7 +163,7 @@ check(norm("KORAMANGALA (4:30PM)") in pm_group and norm("ECITY (6:00PM)") in pm_
 # --- removed / pending / old-quarter content must be absent
 generated = "".join(flat[1:-3])  # pages built from Q4 data
 for bad in ["APRIL", "MAY2026", "JUNE2026", "BIRTHDAYS", "MARRIAGEANNIVERSARIES", "SECRETARY'SDESK",
-            "NEWBORNBABIES", "NEWBORNS", "BAPTISM", "BAPTIZED", "OBITUARY", "CONDOLENCES", "HOLYMATRIMONY",
+            "BAPTISM", "BAPTIZED", "OBITUARY", "CONDOLENCES", "HOLYMATRIMONY",
             "395/CRLM", "371/Carmelaram", "087/Belandur",
             "19thApril2026", "21stJune2026", "Easter"]:
     check(bad.lower() not in generated.lower(), f"no old/removed content: {bad}")

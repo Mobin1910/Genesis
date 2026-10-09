@@ -25,6 +25,7 @@ APPROVED_CORRECTIONS = _CORR.get("text", {})
 # {"<date> | <GROUP>": "<time>"} - meeting times the church corrected.
 PRAYER_TIME_FIXES = _CORR.get("prayerMeetingTime", {})
 NEWSLETTER_DOCX = SRC / "Newsletter Oct- Dec 2026.docx"
+NEWBORNS_TXT = SRC / "newborns.txt"  # one announcement per line, as sent by the church
 
 # House style applied to names, ER numbers and meeting times (user request:
 # "make the ER numbers consistent with three digits" and similar fixes).
@@ -197,6 +198,24 @@ def new_members(d):
     return out
 
 
+NEWBORN_RE = re.compile(r"^(?P<p1>.+?) and (?P<p2>.+?) \(\s*ER\s*(?P<er>\d+)\s*/\s*(?P<grp>[A-Za-z ]+?)\s*\)"
+                        r" (?P<rest>blessed with a baby (?:boy|girl|boys|girls|twins).*?)\.?$")
+
+
+def newborns():
+    out = []
+    for line in NEWBORNS_TXT.read_text().splitlines():
+        if not line.strip():
+            continue
+        m = NEWBORN_RE.match(line.strip())
+        assert m, f"unrecognised newborn announcement: {line!r}"
+        rec = {"parents": [m["p1"].strip(), m["p2"].strip()],
+               "er": f"{int(m['er']):03d}/{m['grp'].strip()}", "text": m["rest"] + "."}
+        STYLE_LOG.append(f"Newborn | {line.strip()!r}\n  now: {rec!r}")
+        out.append(rec)
+    return out
+
+
 # Wording fixes in the events list (house style / typos).
 EVENT_FIXES = {"Bibel": "Bible", "Young Womens": "Young Women's", "Chief Celebrant :": "Chief Celebrant:"}
 _EVT_TIME = re.compile(r"\s*@\s*(\d{1,2}:\d{2})\s*([ap]m)\b\.?", re.I)
@@ -248,6 +267,7 @@ def main():
         "prayerMeetings": prayer_meetings(wb),
     }
     news = docx.Document(NEWSLETTER_DOCX)
+    content["newborns"] = newborns()
     content["newMembers"] = new_members(news)
     content["events"] = events(news)
     for it in content["lectionary"]:
@@ -274,7 +294,7 @@ def main():
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(content, ensure_ascii=False, indent=2))
     print(f"lectionary={len(content['lectionary'])} prayerMeetings={len(content['prayerMeetings'])} "
-          f"newMembers={len(content['newMembers'])} "
+          f"newborns={len(content['newborns'])} newMembers={len(content['newMembers'])} "
           f"events={sum(len(m['items']) for m in content['events']['months'])}")
 
 
